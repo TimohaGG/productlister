@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head >
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Producter</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+</head>
+<body>
+<header th:insert="templatePages/header::header"></header>
+<main>
+  <div class="row justify-content-center">
+    <div class="col-sm-12 col-lg-6 col-md-10">
+      <h2 th:text="${order.getOrderDate()}" class="text-center"></h2>
+      <ul class="list-group">
+        <li class="list-group-item" th:each="prod:${order.getProductsList()}" >
+
+          <div class="d-flex" th:onclick="'checkProduct('+${prod.getId()}+')'">
+            <input type="checkbox" th:name="${prod.getId()}" th:id="${prod.getId()}" checked th:if="${prod.isBought()}"/>
+            <input type="checkbox" th:name="${prod.getId()}" th:id="${prod.getId()}" th:unless="${prod.isBought()}"/>
+            <label  th:for="${prod.getId()}" class="w-100 d-flex justify-content-between ms-3">
+              <span th:text="${prod.getName()}"></span>
+              <span th:text="${prod.getAmount()}"></span>
+            </label>
+          </div>
+
+
+        </li>
+        <li class="mt-3">
+          <form method="get" th:onsubmit="'addProduct(' +${order.getId()} +',event)'">
+            <div class="input-group">
+              <input type="text" name="name" id="name" class="form-control w-50" placeholder="Продукт"/>
+              <input type="text" name="amount" id="amount" class="form-control " placeholder="к-сть"/>
+              <input type="submit" value="+" class="form-control"/>
+            </div>
+
+          </form>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+<script>
+  async function addProduct(order,e){
+    e.preventDefault();
+    console.log(order);
+    let param1 = document.getElementById("name").value;
+    let param2 = document.getElementById("amount").value;
+
+    document.getElementById("name").value = "";
+    document.getElementById("amount").value = "";
+
+    let body = {
+      "param1":param1,
+      "param2":param2,
+      "param3":order
+    };
+    console.log(body);
+    let resp = await fetch("/products/add",{
+      method:"POST",
+      body:JSON.stringify(body),
+      headers:{
+        'Content-Type': 'application/json',
+      }
+    })
+            .then(res=>res.json())
+            .then(result=>{
+              let elem = document.getElementsByClassName("list-group");
+              let elemCopy = elem.item(0).children.item(0).cloneNode(true);
+              elemCopy.getElementsByTagName("span").item(0).innerText = result.name;
+              elemCopy.getElementsByTagName("span").item(1).innerText = result.amount;
+
+              elemCopy.getElementsByTagName("input").item(0).name=result.id;
+              elemCopy.getElementsByTagName("input").item(0).id=result.id;
+              elemCopy.getElementsByTagName("input").item(0).checked = false;
+
+              console.log(elemCopy.getElementsByTagName("label").item(0));
+              elemCopy.getElementsByTagName("label").item(0).setAttribute("for",result.id);
+
+              let length = elem.item(0).children.length;
+              elem.item(0).children.item(length-2).insertAdjacentElement("afterend",elemCopy);
+              console.log(elemCopy);
+            })
+            .catch(error=>console.log(error));
+  }
+
+  async function checkProduct(id){
+    console.log(id);
+    let checked = document.getElementById(id).checked;
+    let resp = await fetch("/products/check/"+id +"?isChecked="+checked,{
+      headers:{
+        'Content-Type': 'application/json',
+      },
+      method:"POST"
+    })
+            .then(res=>res.json())
+            .then(resp=>console.log(resp))
+            .catch(error=>console.log(error));
+  }
+
+  setInterval(check,5000);
+
+  async function check(){
+    let id = [[${order.getId()}]];
+
+    let resp = await fetch("/products/selected?orderId="+id,{
+      method:"POST",
+      headers:{'Content-Type': 'application/json'}
+
+    })
+            .then(res=>res.json())
+            .then(response=>{
+              let inputs = document.querySelectorAll("input");
+              for (const input of inputs) {
+                input.checked = Array.from(response).includes(+input.id);
+              }
+            })
+            .catch(error=>console.log(error));
+
+
+    //console.log(inputs);
+  }
+</script>
+</body>
+</html>
