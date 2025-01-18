@@ -15,17 +15,22 @@
     <div class="col-sm-12 col-lg-6 col-md-10">
       <h2 th:text="${order.getOrderDate()}" class="text-center"></h2>
       <ul class="list-group">
-        <li class="list-group-item" th:each="prod:${order.getProductsList()}" >
+        <li class="list-group-item d-flex justify-content-between" th:each="prod:${order.getProductsList()}" >
 
-          <div class="d-flex" th:onclick="'checkProduct('+${prod.getId()}+')'">
-            <input type="checkbox" th:name="${prod.getId()}" th:id="${prod.getId()}" checked th:if="${prod.isBought()}"/>
-            <input type="checkbox" th:name="${prod.getId()}" th:id="${prod.getId()}" th:unless="${prod.isBought()}"/>
+          <div class="d-flex align-items-center w-100" >
+            <input type="checkbox" th:name="${prod.getId()}" th:id="${prod.getId()}" checked th:if="${prod.isBought()}" style="transform: scale(2)" th:onclick="'checkProduct('+${prod.getId()}+')'"/>
+            <input type="checkbox" th:name="${prod.getId()}" th:id="${prod.getId()}" th:unless="${prod.isBought()}" style="transform: scale(2)" th:onclick="'checkProduct('+${prod.getId()}+')'"/>
             <label  th:for="${prod.getId()}" class="w-100 d-flex justify-content-between ms-3">
-              <span th:text="${prod.getName()}"></span>
+              <span onclick="rename(event)">
+                <input type="text" th:value="${prod.getName()}" style="border: 0" th:onfocusout="'saveName(' +${prod.getId()}+')'"/>
+              </span>
               <span th:text="${prod.getAmount()}"></span>
             </label>
-          </div>
 
+          </div>
+          <button class="btn btn-outline-dark ms-3" th:onclick="'removeItem(' +${prod.getId()} + ',event)'">
+            -
+          </button>
 
         </li>
         <li class="mt-3">
@@ -79,6 +84,10 @@
               elemCopy.getElementsByTagName("input").item(0).id=result.id;
               elemCopy.getElementsByTagName("input").item(0).checked = false;
 
+              elemCopy.getElementsByTagName("div").item(0).setAttribute("onclick",'checkProduct('+ result.id+')');
+
+              elemCopy.getElementsByTagName("button").item(0).setAttribute("onclick",'removeItem(' +result.id + ',event)')
+
               console.log(elemCopy.getElementsByTagName("label").item(0));
               elemCopy.getElementsByTagName("label").item(0).setAttribute("for",result.id);
 
@@ -91,7 +100,7 @@
 
   async function checkProduct(id){
     console.log(id);
-    let checked = document.getElementById(id).checked;
+    let checked = !document.getElementById(id).checked;
     let resp = await fetch("/products/check/"+id +"?isChecked="+checked,{
       headers:{
         'Content-Type': 'application/json',
@@ -125,6 +134,48 @@
 
     //console.log(inputs);
   }
+
+  async function removeItem(id,event){
+      let resp = await fetch("/products/remove/"+id,{
+      method:"POST",
+      headers:{'Content-Type': 'application/json'}
+    })
+            .then(res=>res.json())
+            .then(resp=>{
+              if(resp===true){
+                event.target.parentNode.remove();
+              }
+
+            })
+            .catch(error=>console.log(error));
+
+
+  }
+
+  function rename(event){
+    event.stopPropagation();
+    console.log("asd");
+  }
+
+  async function saveName(id){
+
+
+    let elem = document.querySelector(`label[for='${id}'] input`);
+    let text = elem.value;
+    let resp = await fetch("/products/rename/" + id + "?name="+text,{
+      method:"POST",
+      headers:{'Content-Type': 'application/json'},
+      //body:JSON.stringify({"param1":text})
+    })
+            .then(res=>res.json())
+            .then(resp=>{
+              if(resp===true){
+                elem.value = text;
+              }
+            })
+            .catch(error=>console.log(error));
+  }
+
 </script>
 </body>
 </html>

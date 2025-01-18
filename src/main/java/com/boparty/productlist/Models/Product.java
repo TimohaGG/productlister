@@ -52,4 +52,7 @@ public class Product {
     public void setBought(boolean isBought) {
         this.isBought = isBought;
     }
+
+
+
 }

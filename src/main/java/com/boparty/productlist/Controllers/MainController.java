@@ -42,6 +42,7 @@ public class MainController {
         return "viewOrder";
     }
 
+
 //    @PostMapping("/products/add")
 //    public ResponseEntity<Product> addProduct(@RequestBody RequestDTO product) {
 //        return new ResponseEntity<>(new Product(), HttpStatus.OK);
@@ -85,5 +86,26 @@ public class MainController {
                 .toList();
         return new ResponseEntity<>(prodcts, HttpStatus.OK);
 
+    }
+
+    @PostMapping("/products/remove/{id}")
+    public ResponseEntity<Boolean> removeProduct(@PathVariable Long id) {
+        Product prod = productsService.findById(id);
+        if(prod == null) {
+            return new ResponseEntity<>(false, HttpStatus.OK);
+        }
+        productsService.remove(id);
+        return new ResponseEntity<>(true, HttpStatus.OK);
+    }
+
+    @PostMapping("/products/rename/{id}")
+    public ResponseEntity<Boolean> renameProduct(@RequestParam String name, @PathVariable Long id) {
+        Product prod = productsService.findById(id);
+        if(prod == null) {
+            return new ResponseEntity<>(false, HttpStatus.OK);
+        }
+        prod.setName(name);
+        productsService.add(prod);
+        return new ResponseEntity<>(true, HttpStatus.OK);
     }
 }

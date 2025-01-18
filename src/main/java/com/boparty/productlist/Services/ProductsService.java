@@ -24,4 +24,8 @@ public class ProductsService {
     public Product findById(Long id) {
         return productsRepos.findById(id).orElse(null);
     }
+
+    public void remove(Long id) {
+        productsRepos.deleteById(id);
+    }
 }
